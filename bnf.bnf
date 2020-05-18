@@ -8,10 +8,15 @@
          | <const-ass>
          | <let-ass>
          | <func>
+         | <lb> <expr> <rb>
 
 <if> ::= "?:"
 <then> ::= "?:"
 <else> ::= "?"
+
+<comment-start> ::= "-{"
+<comment-end> ::= "}-"
+<comment> ::= "--"
 
 <lb> ::= "("
 <rb> ::= ")"
