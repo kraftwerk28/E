@@ -1,0 +1,34 @@
+/* No keywords */
+/* Everything is an expression */
+
+<program> ::= <expr>
+<expr> ::= <atom>
+         | <if> <expr> <then> <expr> { <then> <expr } { <else> <expr> }
+         | <list>
+         | <const-ass>
+         | <let-ass>
+         | <func>
+
+<if> ::= "?:"
+<then> ::= "?:"
+<else> ::= "?"
+
+<lb> ::= "("
+<rb> ::= ")"
+<sqbr> ::= "["
+<sqbl> ::= "]"
+<const-ass> ::= <id> "<-" <expr>
+<let-ass> ::= <id> "<~" <expr>
+
+<list> ::= <sqbl> <expr> { , <expr> } <sqbr>
+<id> ::= <letter>
+
+<atom> ::= <integer> | <float> | <string>
+<integer> ::= <digit> | <digit><integer>
+<float> ::= <integer> | <integer>"."<integer>
+<string> ::= """ <letter>, { <letter> } """
+
+<id> ::= <letter>
+<operator> ::= "+" | "-" | "*" | "/" | "//"
+<letter> ::= "a" | "b" | ... | "z"
+<digit> ::= "0" | "1" | ... | "9"
