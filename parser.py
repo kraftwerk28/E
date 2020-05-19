@@ -73,6 +73,7 @@ class Parser:
         else:
             self.fail(f'Unexpected token inside expression: {kind}')
 
+    # TODO: auto detect argument count at compile time to prevent braces ???
     def funcall(self, funcname, first_arg):
         args = []
         kind, value = first_arg

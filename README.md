@@ -3,6 +3,11 @@
 ### This language highly inspired by Haskell and Lisp
 ### WIP: the parser still doesn't fully support syntax from code above
 
+### TODO:
+- [ ] rewrite everything in Rust
+- [ ] infix expressions + shunting yard alg (w/ special syntax?)
+- [ ] more semantic analysis
+
 ### Code example:
 
 ```
