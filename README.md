@@ -20,7 +20,7 @@ b <~ minus a 33
 -{ [Pure] function declaration }-
 fact :: n ->
   ?: n < 2 | n
-  ?: mul n (fact (pred n))
+  :? mul n (fact (pred n))
 
 -{ Printing to stdout }-
 out (fact 10)
