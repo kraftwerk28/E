@@ -1,6 +1,6 @@
 # E-lang
 
-### This language highly inspired by Haskell and Lisp
+### This language is highly inspired by Haskell and Lisp
 ### WIP: the parser still doesn't fully support syntax from code above
 
 ### TODO:
