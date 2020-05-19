@@ -1,7 +1,7 @@
 /* No keywords */
 /* Everything is an expression */
 
-<program> ::= <expr>
+<program> ::= <expr> { <expr> }
 <expr> ::= <atom>
          | <if> <expr> <then> <expr> { <then> <expr } { <else> <expr> }
          | <list>
@@ -11,8 +11,9 @@
          | <lb> <expr> <rb>
 
 <if> ::= "?:"
-<then> ::= "?:"
-<else> ::= "?"
+<elif> ::= "?"
+<then> ::= "|"
+<else> ::= ":?"
 
 <comment-start> ::= "-{"
 <comment-end> ::= "}-"
@@ -22,6 +23,8 @@
 <rb> ::= ")"
 <sqbr> ::= "["
 <sqbl> ::= "]"
+<func-arrow> ::= "->"
+<func-decl> ::= "::"
 <const-ass> ::= <id> "<-" <expr>
 <let-ass> ::= <id> "<~" <expr>
 

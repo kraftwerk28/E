@@ -18,11 +18,20 @@ class L(Enum):
     EQ = auto()
     ID = auto()
     TERM = auto()
+
     IF = auto()
     ELSE = auto()
+    THEN = auto()
+    ELIF = auto()
+
     BL = auto()
     BR = auto()
     COMMENT = auto()
+    FUNC_DECL = auto()
+    FUNC_ARROW = auto()
+
+    def isatom(kind):
+        return kind in (L.FLOAT, L.INT, L.STRING, L.OPERATOR)
 
 
 class Lexer:
@@ -43,9 +52,7 @@ class Lexer:
     def eat(self, amount=1):
         self.char = self.fdescriptor.read(amount)
 
-    def fail(self, reason):
-        print('-> Lexer error:', reason)
-
+    def line_report(self):
         pos = self.fdescriptor.tell()
         self.fdescriptor.seek(0)
 
@@ -56,19 +63,26 @@ class Lexer:
 
         line_start = self.fdescriptor.tell()
         report = self.fdescriptor.readline()
-        report += ' ' * (pos - line_start - 1) + '^'
+        report += ' ' * (pos - line_start - 2) + '^'
         print(report)
+
+    def fail(self, reason):
+        print('-> Lexer error:', reason)
+        self.line_report()
+
+    def cur_tok(self): return self.tok
 
     def read_tok(self):
         ch = self.char
+        tok = None
 
-        if ch == '\n':
+        if ch == '.':
             self.eat()
             self.line += 1
-            return (L.TERM, None)
+            tok = (L.TERM, None)
 
         elif len(ch) == 0:
-            return (L.EOF, None)
+            tok = (L.EOF, None)
 
         elif ch.isdigit():  # integer OR float
             s = ''
@@ -76,13 +90,14 @@ class Lexer:
                 s += self.char
                 self.eat()
             if '.' in s:
-                return (L.FLOAT, float(s))
+                tok = (L.FLOAT, float(s))
             else:
-                return (L.INT, int(s))
+                tok = (L.INT, int(s))
 
         elif ch.isspace():  # Pass out extra whitespaces
             self.eat()
-            return self.read_tok()
+            # return self.read_tok()
+            tok = self.read_tok()
 
         elif ch == '"':  # String atom
             s = ''
@@ -91,25 +106,25 @@ class Lexer:
                 s += self.char
                 self.eat()
             self.eat()
-            return (L.STRING, s)
+            tok = (L.STRING, s)
 
         elif ch == '<':  # GT operator OR assignment
             self.eat()
             if self.char == '-':
                 self.eat()
-                return (L.CONST_ASS, None)
+                tok = (L.CONST_ASS, None)
             elif self.char == '~':
-                elf.eat()
-                return (L.LET_ASS, None)
+                self.eat()
+                tok = (L.LET_ASS, None)
             else:
-                return (L.LT, None)
+                tok = (L.LT, None)
 
         elif ch == '>':
             self.eat()
-            return (L.GT, None)
+            tok = (L.GT, None)
 
         # Comments processing
-        if ch == '-':
+        elif ch == '-':
             self.eat()
             if self.char == '{':
                 self.eat()
@@ -118,45 +133,64 @@ class Lexer:
                     s += self.char
                     self.eat()
                 self.eat()
-                return (L.COMMENT, s)
+                self.eat() # Eat }-
+                tok = (L.COMMENT, s)
+            elif self.char == '>':
+                self.eat()
+                tok = (L.FUNC_ARROW, None)
 
             else:
-                return (L.OPERATOR, ch)
+                tok = (L.OPERATOR, ch)
 
         elif ch in self.OPERATORS:
             # TODO: handle // OPERATOR
             self.eat()
-            return (L.OPERATOR, ch)
+            tok = (L.OPERATOR, ch)
 
         elif ch in self.SYMBOLS:
             self.eat()
-            return (self.SYMBOLS[ch], None)
+            tok = (self.SYMBOLS[ch], None)
 
         elif ch.isalpha():
             s = ''
             while self.char.isalpha():
                 s += self.char
                 self.eat()
-            return (L.ID, None)
+            tok = (L.ID, s)
 
         elif ch == '?':  # if-else-expression
             # TODO: handle infinite else expression
             self.eat()
             if self.char == ':':
                 self.eat()
-                return (L.IF, None)
+                tok = (L.IF, None)
             else:
-                return (L.ELSE, None)
+                tok = (L.ELIF, None)
+
+        elif ch == ':':
+            self.eat()
+            if self.char == ':':
+                tok = (L.FUNC_DECL, None)
+            elif self.char == '?':
+                tok = (L.ELSE, None)
+            self.eat()
+
+        elif ch == '|':
+            self.eat()
+            tok = (L.THEN, None)
 
         else:
             self.fail(f'Unexpected character: [{self.char}]')
+            return
+        self.tok = tok
+        return tok
 
     def next_token(self) -> (L, Any):
         return self.read_tok()
 
 
 if __name__ == '__main__':
-    l = Lexer('code-samples/simple.xp')
+    l = Lexer(sys.argv[1] if len(sys.argv) > 1 else 'code-samples/simple.xp')
     t = (None, None)
     while t[0] != L.EOF:
         t = l.next_token()

@@ -1,0 +1,10 @@
+fact :: n ->
+  ?: lt n 2 | n
+  :? n (fact (pred n))
+
+out (fact 10)
+
+-{
+func :: a b -> func 12 a.
+func (func 10 20) (func 33 10)
+}-
