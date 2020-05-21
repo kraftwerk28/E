@@ -33,7 +33,7 @@ class Node:
         return self.__repr__()
 
     def __repr__(self):
-        ind = lambda s: '\n'.join('\t' + s for s in s.split('\n'))
+        def ind(s): return '\n'.join('\t' + s for s in s.split('\n'))
         ops = '\n'.join(ind(repr(op)) for op in self.ops if op)
         return f'{self.kind} (\n{ops}\n)'
 
@@ -48,11 +48,11 @@ class Parser:
         sys.exit(1)
 
     def expect(self, *kinds) -> (L, Any):
-        v = self.lexer.next_token()
-        if v[0] not in kinds:
+        kind, val = self.ct()
+        if kind not in kinds:
             exp = ', '.join(str(k) for k in kinds)
-            self.fail(f'Unexpected token: {v[0]} ({v[1]}). Expected {exp}')
-        return v
+            self.fail(f'Unexpected token: {kind} ({val}). Expected {exp}')
+        return (kind, val)
 
     def nt(self): return self.lexer.next_token()
     def ct(self): return self.lexer.tok
@@ -88,7 +88,7 @@ class Parser:
         elif kind == L.IF:
             return self.if_else()
 
-        elif kind in (L.EOF,):
+        elif kind in (L.EOF, L.TERM):
             return Node(N.EMPTY)
 
         else:
@@ -126,8 +126,8 @@ class Parser:
 
     def paren_expr(self):
         e = self.expr()
-        if self.ct()[0] != L.BR:
-            self.fail(f'Expected L.BR. Instead got {self.ct()}')
+        self.expect(L.BR)
+        print('end of paren expr')
         return e
 
     def operation(self):
@@ -149,7 +149,8 @@ class Parser:
         statements = []
         while True:
             current_kind, _ = self.ct()
-            if current_kind == L.EOF: break
+            if current_kind == L.EOF:
+                break
             statements.append(self.expr())
         return Node(N.PROGRAM, *statements)
         # return Node(N.PROGRAM, self.expr())

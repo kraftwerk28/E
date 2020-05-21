@@ -1,3 +1,6 @@
-func :: a b -> (add a b)
+func :: a b ->
+  ?: gt a b | b :? (b)
 
-out (func 4 (pred 1))
+b <- (func 12 22)
+
+out (func 1 b)

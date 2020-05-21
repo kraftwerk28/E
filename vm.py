@@ -24,9 +24,9 @@ class VM:
         self.fail(f'Variable not declared: {n}')
 
     def const(self, ops):
-        result, = self.run_op(ops[1])
-        self.consts[ops[0]] = result
-
+        name, op = ops
+        result = self.run_op(op)
+        self.consts[name] = result
 
     def call_func(self, funcname, args):
         if funcname in std_functions:
@@ -60,14 +60,20 @@ class VM:
             return self.id(ops[0])
 
         elif kind == N.BRANCH:
-            # passed = self.run_op()
-            pass
+            passed = self.run_op(ops[0])
+            if passed:
+                return self.run_op(ops[1])
+            else:
+                return self.run_op(ops[2])
 
         elif kind == N.ATOM:
             return ops[0]
 
         elif kind == N.CONST:
             self.const(ops)
+
+        elif kind == N.EMPTY:
+            return
 
         else:
             self.fail(f'Unexpected opcode {kind}')
@@ -86,7 +92,8 @@ if __name__ == '__main__':
 
     parser = Parser(lex)
     ast = parser.parse()
-    print('AST', ast)
+    if '--ast' in sys.argv:
+        print('AST', ast)
 
     vm = VM()
 
