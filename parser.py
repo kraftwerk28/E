@@ -13,10 +13,10 @@ class N(Enum):
     EXPR = auto()
     CONST = auto()
     LET = auto()
-    IF = auto()
+    BRANCH = auto()
     RANGE = auto()
     FUNC_DECL = auto()
-    FUNC = auto()
+    FUNC_CALL = auto()
     ATOM = auto()
     ID = auto()
 
@@ -32,9 +32,10 @@ class Node:
     def __str__(self):
         return self.__repr__()
 
-    def __repr__(self, indent=0):
-        ops = ', '.join(repr(op) for op in self.ops if op)
-        return f'{self.kind}: ({ops})'
+    def __repr__(self):
+        ind = lambda s: '\n'.join('\t' + s for s in s.split('\n'))
+        ops = '\n'.join(ind(repr(op)) for op in self.ops if op)
+        return f'{self.kind} (\n{ops}\n)'
 
 
 class Parser:
@@ -42,21 +43,30 @@ class Parser:
         self.lexer = lexer
 
     def fail(self, reason):
-        print('Parser error:', reason)
+        print('-> Parser error:', reason)
         self.lexer.line_report()
+        sys.exit(1)
 
-    def expect(self, kind: L) -> (L, Any):
+    def expect(self, *kinds) -> (L, Any):
         v = self.lexer.next_token()
-        if v[0] != kind:
-            self.fail(f'Unexpected token: {v[v]}. Expected {kind}')
+        if v[0] not in kinds:
+            exp = ', '.join(str(k) for k in kinds)
+            self.fail(f'Unexpected token: {v[0]} ({v[1]}). Expected {exp}')
         return v
 
     def nt(self): return self.lexer.next_token()
+    def ct(self): return self.lexer.tok
 
     def expr(self):
+
         kind, value = self.nt()
-        if kind == L.ID:
+
+        if kind == L.COMMENT:
+            return self.expr()
+
+        if kind == L.ID or L.isatom(kind):
             k2, v2 = self.nt()
+
             # Assignments
             if k2 == L.CONST_ASS:
                 return Node(N.CONST, value, self.expr())
@@ -64,34 +74,45 @@ class Parser:
                 return Node(N.LET, value, self.expr())
             elif k2 == L.FUNC_DECL:
                 return self.func_decl(value)
-            else:
+
+            elif L.isatom(k2) or k2 in (L.ID, L.BL):
                 return self.funcall(value, (k2, v2))
+            elif kind == L.ID:
+                return Node(N.ID, value)
+            else:
+                return Node(N.ATOM, value)
 
         elif kind == L.BL:
             return self.paren_expr()
 
+        elif kind == L.IF:
+            return self.if_else()
+
+        elif kind in (L.EOF,):
+            return Node(N.EMPTY)
+
         else:
             self.fail(f'Unexpected token inside expression: {kind}')
 
-    # TODO: auto detect argument count at compile time to prevent braces ???
     def funcall(self, funcname, first_arg):
         args = []
         kind, value = first_arg
         while True:
-            if L.isatom(kind):
-                n = Node(N.ATOM, kind, value)
+            n = None
+            if kind in (L.TERM, L.BR, L.THEN, L.EOF):
+                break
+            elif L.isatom(kind):
+                n = Node(N.ATOM, value)
             elif kind == L.ID:
                 n = Node(N.ID, value)
-            elif kind == L.BL:
-                n = self.paren_expr()
-            elif kind == L.TERM:
-                break
+            elif kind in (L.BL,):
+                n = self.expr()
             else:
                 self.fail(f'Unexpected token inside function call: {kind}')
-                break
-            kind, value = self.nt()
             args.append(n)
-        return Node(N.FUNC, funcname, args)
+            kind, value = self.nt()
+
+        return Node(N.FUNC_CALL, funcname, args)
 
     def func_decl(self, funcname: str):
         arg = self.nt()
@@ -104,16 +125,21 @@ class Parser:
         return Node(N.FUNC_DECL, funcname, argnames, self.expr())
 
     def paren_expr(self):
-        self.nt()
         e = self.expr()
-        self.expect(L.BR)
+        if self.ct()[0] != L.BR:
+            self.fail(f'Expected L.BR. Instead got {self.ct()}')
         return e
 
     def operation(self):
         pass
 
     def if_else(self):
-        pass
+        cond = self.expr()
+        self.expect(L.THEN)
+        then = self.expr()
+        self.expect(L.ELSE)
+        els = self.expr()
+        return Node(N.BRANCH, cond, then, els)
 
     def assignment(self):
         id = self.nt()
@@ -121,8 +147,12 @@ class Parser:
     def parse(self) -> Node:
         # self.lexer.next_token()
         statements = []
-        n = Node(N.PROGRAM, self.expr())
-        return n
+        while True:
+            current_kind, _ = self.ct()
+            if current_kind == L.EOF: break
+            statements.append(self.expr())
+        return Node(N.PROGRAM, *statements)
+        # return Node(N.PROGRAM, self.expr())
 
 
 if __name__ == '__main__':

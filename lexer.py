@@ -48,6 +48,7 @@ class Lexer:
         self.char = self.fdescriptor.read(1)
         self.sym = None
         self.line = 1
+        self.tok = (None, None)
 
     def eat(self, amount=1):
         self.char = self.fdescriptor.read(amount)
@@ -76,9 +77,13 @@ class Lexer:
         ch = self.char
         tok = None
 
-        if ch == '.':
+        if ch == '\n':
             self.eat()
             self.line += 1
+            return self.read_tok()
+
+        if ch == '.':
+            self.eat()
             tok = (L.TERM, None)
 
         elif len(ch) == 0:
