@@ -2,6 +2,6 @@ fact :: n ->
   ?: lt n 2 | n
   :? mul n (fact (pred n)).
 
-a <- fact 5 .
+a <- fact 4 .
 
-out (add (fact 10) 1)
+out a
