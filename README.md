@@ -1,7 +1,6 @@
 # E-lang
 
 ### This language is highly inspired by Haskell and Lisp
-### WIP: the parser still doesn't fully support syntax from code above
 
 ### TODO:
 - [ ] rewrite everything in Rust
