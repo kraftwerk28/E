@@ -1,11 +1,11 @@
-# E-lang
+# Elang
 
-### This language is highly inspired by Haskell and Lisp
+### Highly inspired by Haskell and Lisp
 
 ### TODO:
 - [ ] rewrite everything in Rust
-- [ ] infix expressions + shunting yard alg (w/ special syntax?)
-- [ ] more semantic analysis
+- [ ] infix expressions + shunting yard (maybe need special syntax?)
+- [ ] semantic analysis
 
 ### Code example:
 
@@ -30,7 +30,7 @@ fact :: n ->
 out (fact 10)
 ```
 
-### Language grammar
+### Grammar:
 
 ```
 <program> ::= <expr> { <expr> }
